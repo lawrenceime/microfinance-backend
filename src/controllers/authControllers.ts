@@ -6,11 +6,15 @@ import {generateToken} from '../utils/tokenUtils'
 export const signUp = async(req:Request , res:Response) => {
     const {name , email , password , confirmPassword} = req.body;
     console.log(req.body);
-    if(password !== confirmPassword)
-        return  res.status(400).json({message : "Passwords do not match"});
+    if(password !== confirmPassword) {
+        res.status(400).json({message : "Passwords do not match"});
+        return; // Just return without a value
+    }
     const existingUser = await User.findOne({email});
-    if(existingUser)
-        return res.status(400).json({message : "Email already exists"});
+    if(existingUser) {
+        res.status(400).json({message : "Email already exists"});
+        return;
+    }
     const hashedPassword = await hashPassword(password);
     const user = await User.create({name , email , password : hashedPassword});
     const token = generateToken(user._id.toString());
@@ -20,24 +24,30 @@ export const signUp = async(req:Request , res:Response) => {
 export const login = async(req:Request , res:Response) => {
     const {email , password} = req.body;
     const user = await User.findOne({email});
-    if(!user)
-        return res.status(404).json({message : "User not found"});
+    if(!user) {
+        res.status(404).json({message : "User not found"});
+        return;
+    }
     const isMatch = await comparePassword(password , user.password);
-    if(!isMatch)
-        return res.status(400).json({message:"Invalid Credentials"})
+    if(!isMatch) {
+        res.status(400).json({message:"Invalid Credentials"});
+        return;
+    }
     const token = generateToken(user._id.toString());
-    res.json({token, userId: user._id})
+    res.json({token, userId: user._id});
 }
 
 export const forgotPassword = async(req:Request , res:Response) => {
     const {email} = req.body;
     const user = await User.findOne({email});
-    if(!user)
-        return res.status(404).json({message:"User not found"});
-      // Generate and save reset token (simplified)
+    if(!user) {
+        res.status(404).json({message:"User not found"});
+        return;
+    }
+    // Generate and save reset token (simplified)
     const resetToken = generateToken(user._id.toString());
     user.resetToken = resetToken;
     user.resetTokenExpiry = new Date(Date.now() + 3600000);
-    await user.save(); 
+    await user.save();
     res.json({message:"Password reset link has been sent!" , resetToken});
 }
