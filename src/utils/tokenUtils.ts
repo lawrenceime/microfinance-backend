@@ -11,4 +11,4 @@ export const verifyToken = (token:string) => {
  return jwt.verify(token, SECRET);
 };
 
-console.log(jwt);
+
